@@ -1,7 +1,8 @@
 module Main where
 
 import Data.List
-import Data.Maybe (mapMaybe)
+import qualified Data.Set as Set
+import Data.Maybe (mapMaybe, catMaybes)
 import System.IO
 
 import Ants
@@ -11,9 +12,24 @@ import Ants
 tryOrder :: World -> [Order] -> Maybe Order
 tryOrder w = find (passable w)
 
--- | Generates orders for an Ant in all directions
-generateOrders :: Ant -> [Order]
-generateOrders a = map (Order a) [North .. West]
+-- | Generates orders for an Ant in all direction
+
+type TakenPositions = Set.Set Point
+
+isValidOrder :: TakenPositions -> World -> Order -> Bool
+isValidOrder tp w o = 
+  let newPoint = move (direction o) (point $ ant o)
+  in (passable w o) && (not $ (Set.member newPoint tp))
+
+generateOrders :: [Ant] -> TakenPositions -> World -> [Maybe Order]                   
+generateOrders [] _ _ = [Nothing]
+generateOrders (a : xs) tp w = ((generateOrders xs newTp) w) ++ [filteredOrder]
+  where tempOrders =  map (Order a) [North .. West]
+        filteredOrder = find (isValidOrder tp w) tempOrders
+        newTp = case filteredOrder of
+          Just val -> Set.insert (move (direction val) (point $ ant val)) tp
+          Nothing -> tp
+                         
 
 {- | 
  - Implement this function to create orders.
@@ -26,15 +42,17 @@ generateOrders a = map (Order a) [North .. West]
 doTurn :: GameParams -> GameState -> IO [Order]
 doTurn gp gs = do
   -- generate orders for all ants belonging to me
-  let generatedOrders = map generateOrders $ myAnts $ ants gs
+    -- 
+  let mine = myAnts $ ants gs
+      generatedOrders = generateOrders mine (Set.empty) (world gs)
+      cleanOrders = catMaybes generatedOrders 
   -- for each ant take the first "passable" order, if one exists
-      orders = mapMaybe (tryOrder (world gs)) generatedOrders
+  --    orders = mapMaybe (tryOrder (world gs)) generatedOrders
   -- this shows how to check the remaining time
   elapsedTime <- timeRemaining gs
   hPutStrLn stderr $ show elapsedTime
   -- wrap list of orders back into a monad
-  return orders
-
+  return cleanOrders
 -- | This runs the game
 main :: IO ()
 main = game doTurn
