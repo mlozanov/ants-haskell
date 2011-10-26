@@ -37,12 +37,11 @@ generateOrders (a : xs) tp w = ((generateOrders xs newTp) w) ++ [filteredOrder]
           Just val -> Set.insert (move (direction val) (point $ ant val)) tp
           Nothing -> tp
 
-closestFood :: GameParams -> [Point] -> Int -> Point -> Point
-closestFood gp [] d p = p 
-closestFood gp (f:fs) d p = closestFood gp fs d' p'
+closestPoint :: GameParams -> [Point] -> Int -> Point -> Point
+closestPoint gp [] d p = p 
+closestPoint gp (f:fs) d p = closestPoint gp fs d' p'
     where d' = distance gp p f
-          p' = if (d < d') then f
-               else p
+          p' = if (d < d') then f else p
                          
 --buildGraph :: [Point] -> Ant -> Int -> Graph.Graph
 --buildGraph (f:fs) a i = Graph.buildG (0,10::Graph.Vertex) []
