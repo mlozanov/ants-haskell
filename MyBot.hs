@@ -19,11 +19,11 @@ foodTiles :: GameState -> [Point]
 foodTiles gs = food gs
 
 directionTo :: Point -> Point -> Direction
-directionTo x y
-  | fst x > fst y = North
-  | fst x < fst y = South
-  | snd x > snd y = East
-  | otherwise = West
+directionTo a b
+  | fst a > fst b = East
+  | fst a < fst b = West
+  | snd a > snd b = North
+  | otherwise = South
   
 
 -- | Generates orders for an Ant in all direction
@@ -40,16 +40,16 @@ generateOrders [] _ _ _ _ = []
 generateOrders (a : xs) tp w gp gs = (generateOrders xs newTp w gp gs) ++ [tempOrder]
   where food = foodTiles gs
         antPos = point a
-        tempOrder = (Order a) (directionTo antPos (closestPoint gp food 0 antPos))
+        tempOrder = (Order a) (directionTo antPos (closestPoint gp food (distance gp antPos (head food)) antPos (0,0)))
         newTp = if isValidOrder tp w tempOrder
           then Set.insert (move (direction tempOrder) (point $ a)) tp
           else tp
         
-closestPoint :: GameParams -> [Point] -> Int -> Point -> Point
-closestPoint gp [] d p = p 
-closestPoint gp (f:fs) d p = closestPoint gp fs d' p'
-    where d' = distance gp p f
-          p' = if (d < d') then f else p
+closestPoint :: GameParams -> [Point] -> Int -> Point -> Point -> Point
+closestPoint gp [] d ap p = p 
+closestPoint gp (f:fs) d ap p = closestPoint gp fs d' ap p'
+    where d' = min (distance gp ap f) d
+          p' = if (d' <= d) then f else p
                          
 --buildGraph :: [Point] -> Ant -> Int -> Graph.Graph
 --buildGraph (f:fs) a i = Graph.buildG (0,10::Graph.Vertex) []
