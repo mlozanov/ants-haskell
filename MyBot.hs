@@ -18,6 +18,13 @@ tryOrder w = find (passable w)
 foodTiles :: GameState -> [Point]
 foodTiles gs = food gs
 
+directionTo :: Point -> Point -> Direction
+directionTo x y
+  | fst x > fst y = North
+  | fst x < fst y = South
+  | snd x > snd y = East
+  | otherwise = West
+  
 
 -- | Generates orders for an Ant in all direction
 
@@ -28,15 +35,16 @@ isValidOrder tp w o =
   let newPoint = move (direction o) (point $ ant o)
   in (passable w o) && (not $ (Set.member newPoint tp))
 
-generateOrders :: [Ant] -> TakenPositions -> World -> [Maybe Order]                   
-generateOrders [] _ _ = [Nothing]
-generateOrders (a : xs) tp w = ((generateOrders xs newTp) w) ++ [filteredOrder]
-  where tempOrders =  map (Order a) [North .. West]
-        filteredOrder = find (isValidOrder tp w) tempOrders
-        newTp = case filteredOrder of
-          Just val -> Set.insert (move (direction val) (point $ ant val)) tp
-          Nothing -> tp
-
+generateOrders :: [Ant] -> TakenPositions -> World -> GameParams -> GameState -> [Order]  
+generateOrders [] _ _ _ _ = []
+generateOrders (a : xs) tp w gp gs = (generateOrders xs newTp w gp gs) ++ [tempOrder]
+  where food = foodTiles gs
+        antPos = point a
+        tempOrder = (Order a) (directionTo antPos (closestPoint gp food 0 antPos))
+        newTp = if isValidOrder tp w tempOrder
+          then Set.insert (move (direction tempOrder) (point $ a)) tp
+          else tp
+        
 closestPoint :: GameParams -> [Point] -> Int -> Point -> Point
 closestPoint gp [] d p = p 
 closestPoint gp (f:fs) d p = closestPoint gp fs d' p'
@@ -59,8 +67,7 @@ doTurn gp gs = do
   -- generate orders for all ants belonging to me
     -- 
   let mine = myAnts $ ants gs
-      generatedOrders = generateOrders mine (Set.empty) (world gs)
-      cleanOrders = catMaybes generatedOrders 
+      generatedOrders = generateOrders mine (Set.empty) (world gs) gp gs
   -- for each ant take the first "passable" order, if one exists
   --    orders = mapMaybe (tryOrder (world gs)) generatedOrders
   -- this shows how to check the remaining time
@@ -68,7 +75,7 @@ doTurn gp gs = do
   elapsedTime <- timeRemaining gs
   hPutStrLn stderr $ show elapsedTime
   -- wrap list of orders back into a monad
-  return cleanOrders
+  return generatedOrders
 -- | This runs the game
 main :: IO ()
 main = game doTurn
