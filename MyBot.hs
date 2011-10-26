@@ -22,8 +22,8 @@ directionTo :: Point -> Point -> Direction
 directionTo x y
   | fst x > fst y = North
   | fst x < fst y = South
-  | snd x > snd y = East
-  | otherwise = West
+  | snd x > snd y = West
+  | otherwise = East
   
 
 -- | Generates orders for an Ant in all direction
