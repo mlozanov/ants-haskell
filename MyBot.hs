@@ -33,23 +33,26 @@ type TakenPositions = Set.Set Point
 isValidOrder :: TakenPositions -> World -> Order -> Bool
 isValidOrder tp w o = 
   let newPoint = move (direction o) (point $ ant o)
-  in (passable w o) && (not $ (Set.member newPoint tp))
+  in (passable w o)  && (not $ (Set.member newPoint tp))
 
 generateOrders :: [Ant] -> TakenPositions -> World -> GameParams -> GameState -> [Order]  
 generateOrders [] _ _ _ _ = []
 generateOrders (a : xs) tp w gp gs = (generateOrders xs newTp w gp gs) ++ [tempOrder]
   where food = foodTiles gs
         antPos = point a
-        tempOrder = (Order a) (directionTo antPos (closestPoint gp food (distance gp antPos (head food)) antPos (0,0)))
+        closestFood = closestPoint gp food 435246523 antPos (0,0)
+        tempOrder = (Order a) $ directionTo antPos closestFood
         newTp = if isValidOrder tp w tempOrder
           then Set.insert (move (direction tempOrder) (point $ a)) tp
           else tp
         
 closestPoint :: GameParams -> [Point] -> Int -> Point -> Point -> Point
-closestPoint gp [] d ap p = p 
-closestPoint gp (f:fs) d ap p = closestPoint gp fs d' ap p'
-    where d' = min (distance gp ap f) d
-          p' = if (d' <= d) then f else p
+closestPoint _ [] _ _ p = p 
+closestPoint gp (f:fs) d ap p 
+  | newDist <= d = closestPoint gp fs d' ap f
+  | otherwise = closestPoint gp fs d' ap p
+    where d' = min newDist d
+          newDist = distance gp ap f
                          
 --buildGraph :: [Point] -> Ant -> Int -> Graph.Graph
 --buildGraph (f:fs) a i = Graph.buildG (0,10::Graph.Vertex) []
@@ -66,14 +69,12 @@ doTurn :: GameParams -> GameState -> IO [Order]
 doTurn gp gs = do
   -- generate orders for all ants belonging to me
     -- 
-  let mine = myAnts $ ants gs
+  let mine = myAnts $ ants gs  
       generatedOrders = generateOrders mine (Set.empty) (world gs) gp gs
-  -- for each ant take the first "passable" order, if one exists
-  --    orders = mapMaybe (tryOrder (world gs)) generatedOrders
   -- this shows how to check the remaining time
 
-  elapsedTime <- timeRemaining gs
-  hPutStrLn stderr $ show elapsedTime
+--  elapsedTime <- timeRemaining gs
+--  hPutStrLn stderr $ show elapsedTime
   -- wrap list of orders back into a monad
   return generatedOrders
 -- | This runs the game
