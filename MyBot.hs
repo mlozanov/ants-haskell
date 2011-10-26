@@ -2,6 +2,7 @@ module Main where
 
 import Data.List
 import qualified Data.Set as Set
+import qualified Data.Graph as Graph
 import Data.Maybe (mapMaybe, catMaybes)
 import System.IO
 
@@ -29,7 +30,16 @@ generateOrders (a : xs) tp w = ((generateOrders xs newTp) w) ++ [filteredOrder]
         newTp = case filteredOrder of
           Just val -> Set.insert (move (direction val) (point $ ant val)) tp
           Nothing -> tp
+
+closestFood :: GameParams -> [Point] -> Int -> Point -> Point
+closestFood gp [] d p = p 
+closestFood gp (f:fs) d p = closestFood gp fs d' p'
+    where d' = distance gp p f
+          p' = if (d < d') then f
+               else p
                          
+--buildGraph :: [Point] -> Ant -> Int -> Graph.Graph
+--buildGraph (f:fs) a i = Graph.buildG (0,10::Graph.Vertex) []
 
 {- | 
  - Implement this function to create orders.
@@ -49,6 +59,7 @@ doTurn gp gs = do
   -- for each ant take the first "passable" order, if one exists
   --    orders = mapMaybe (tryOrder (world gs)) generatedOrders
   -- this shows how to check the remaining time
+
   elapsedTime <- timeRemaining gs
   hPutStrLn stderr $ show elapsedTime
   -- wrap list of orders back into a monad
