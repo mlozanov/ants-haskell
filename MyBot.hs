@@ -13,6 +13,12 @@ import Ants
 tryOrder :: World -> [Order] -> Maybe Order
 tryOrder w = find (passable w)
 
+
+--- Utility functions
+foodTiles :: GameState -> [Point]
+foodTiles gs = food gs
+
+
 -- | Generates orders for an Ant in all direction
 
 type TakenPositions = Set.Set Point

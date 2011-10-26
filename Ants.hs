@@ -21,8 +21,6 @@ module Ants
     -- main function
   , game
 
-  , foodTiles
-
   -- TODO implement the following functions according to the starter pack guide
   --, direction
   ) where
@@ -339,9 +337,6 @@ cleanState gs =
     w = world gs
     invisibles = map clearMetaTile $ elems w
     nw = listArray (bounds w) invisibles
-
-foodTiles :: GameState -> [Point]
-foodTiles gs = food gs
 
 timeRemaining :: GameState -> IO NominalDiffTime
 timeRemaining gs = do
