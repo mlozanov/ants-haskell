@@ -41,7 +41,7 @@ generateOrders (a : xs) tp w gp gs = (generateOrders xs newTp w gp gs) ++ [tempO
   where food = foodTiles gs
         antPos = pointAnt a
         closestFood = closestPoint gp food 435246523 antPos (0,0)
-        tempOrder = (Order a) $ directionTo antPos (pathFind gp gs (viewradius2 gp) closestFood a) --closestFood
+        tempOrder = (Order a) $ directionTo antPos (head $ pathFind gp gs (viewradius2 gp) closestFood a) --closestFood
         newTp = if isValidOrder tp w tempOrder
           then Set.insert (move (directionOrder tempOrder) (pointAnt $ a)) tp
           else tp
@@ -57,15 +57,15 @@ closestPoint gp (f:fs) d ap p
 --buildGraph :: [Point] -> Ant -> Int -> Graph.Graph
 --buildGraph (f:fs) a i = Graph.buildG (0,10::Graph.Vertex) []
 
-pathFind :: GameParams -> GameState -> Int -> Point -> Ant -> Point
-pathFind _ _ 0 _ _ = (0,0)
-pathFind gp gs radius target ant = fst $ findMinDist ds (head ds)
+pathFind :: GameParams -> GameState -> Int -> Point -> Ant -> [Point]
+pathFind _ _ 0 _ _ = []
+pathFind gp gs radius target ant = [(fst $ findMinDist ds (head ds))] ++ pp
     where antPos = pointAnt ant
 
           w = world gs
 
           possiblePaths = map (fm antPos) possibleDirections
-              where possibleDirections = filter (\dir -> passable w (Order ant dir)) [North .. West]
+              where possibleDirections = filter (\dir -> (passable w (Order ant dir)) && (unoccupied w (Order ant dir))) [North .. West]
                     fm = flip move
 
           ds = map (\p -> (p, distance gp p target)) possiblePaths
