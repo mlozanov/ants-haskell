@@ -32,18 +32,18 @@ type TakenPositions = Set.Set Point
 
 isValidOrder :: TakenPositions -> World -> Order -> Bool
 isValidOrder tp w o = 
-  let newPoint = move (direction o) (point $ ant o)
+  let newPoint = move (directionOrder o) (pointAnt $ ant o)
   in (passable w o)  && (not $ (Set.member newPoint tp))
 
 generateOrders :: [Ant] -> TakenPositions -> World -> GameParams -> GameState -> [Order]  
 generateOrders [] _ _ _ _ = []
 generateOrders (a : xs) tp w gp gs = (generateOrders xs newTp w gp gs) ++ [tempOrder]
   where food = foodTiles gs
-        antPos = point a
+        antPos = pointAnt a
         closestFood = closestPoint gp food 435246523 antPos (0,0)
         tempOrder = (Order a) $ directionTo antPos closestFood
         newTp = if isValidOrder tp w tempOrder
-          then Set.insert (move (direction tempOrder) (point $ a)) tp
+          then Set.insert (move (directionOrder tempOrder) (pointAnt $ a)) tp
           else tp
         
 closestPoint :: GameParams -> [Point] -> Int -> Point -> Point -> Point
@@ -57,14 +57,11 @@ closestPoint gp (f:fs) d ap p
 --buildGraph :: [Point] -> Ant -> Int -> Graph.Graph
 --buildGraph (f:fs) a i = Graph.buildG (0,10::Graph.Vertex) []
 
-{- | 
- - Implement this function to create orders.
- - It uses the IO Monad so algorithms can call timeRemaining.
- -
- - GameParams data holds values that are constant throughout the game
- - GameState holds data that changes between each turn
- - for each see Ants module for more information
- -}
+astar :: GameParams -> GameState -> Point -> Ant -> [Point]
+astar gp gs target a = dest
+    where dest = [target]
+          h = distance gp (pointAnt a) target
+
 doTurn :: GameParams -> GameState -> IO [Order]
 doTurn gp gs = do
   -- generate orders for all ants belonging to me
